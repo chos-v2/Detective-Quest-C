@@ -1,0 +1,135 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h> // Para tolower
+
+// Definição da estrutura de dados para o cômodo (nó da árvore)
+struct Sala {
+    char nome[50];
+    struct Sala *esquerda;
+    struct Sala *direita;
+};
+typedef struct Sala Sala;
+
+// =================================================================
+// FUNÇÕES DE CRIAÇÃO E EXPLORAÇÃO
+// =================================================================
+
+/**
+ * Cria dinamicamente uma nova sala (nó da árvore).
+ */
+Sala* criarSala(const char *nome) {
+    Sala* novaSala = (Sala*)malloc(sizeof(Sala));
+    if (novaSala == NULL) {
+        printf("Erro de alocacao de memoria.\n");
+        exit(1);
+    }
+    // Inicializa campos
+    strncpy(novaSala->nome, nome, 49);
+    novaSala->nome[49] = '\0'; 
+    novaSala->esquerda = NULL;
+    novaSala->direita = NULL;
+    
+    return novaSala;
+}
+
+/**
+ * Permite a navegação interativa do jogador pela árvore binária (mapa).
+ */
+void explorarSalas(Sala *atual) {
+    char escolha;
+    
+    while (atual != NULL) {
+        printf("\nVoce esta em: %s\n", atual->nome);
+
+        // Verifica se é um nó-folha (fim do caminho)
+        if (atual->esquerda == NULL && atual->direita == NULL) {
+            printf("FIM DA LINHA: Nao ha mais caminhos nesta sala.\n");
+            break; 
+        }
+
+        printf("Escolha o proximo caminho (e = Esquerda, d = Direita, s = Sair): ");
+        if (scanf(" %c", &escolha) != 1) {
+            while (getchar() != '\n'); 
+            continue;
+        }
+
+        escolha = tolower(escolha); 
+
+        if (escolha == 's') {
+            printf("Saindo da mansao.\n");
+            break;
+        } else if (escolha == 'e') {
+            if (atual->esquerda != NULL) {
+                atual = atual->esquerda;
+            } else {
+                printf("Caminho 'Esquerda' bloqueado.\n");
+            }
+        } else if (escolha == 'd') {
+            if (atual->direita != NULL) {
+                atual = atual->direita;
+            } else {
+                printf("Caminho 'Direita' bloqueado.\n");
+            }
+        } else {
+            printf("Opcao invalida. Escolha 'e', 'd' ou 's'.\n");
+        }
+    }
+}
+
+/**
+ * Libera a memória alocada dinamicamente para a árvore.
+ */
+void liberarMapa(Sala *sala) {
+    if (sala == NULL) {
+        return;
+    }
+    liberarMapa(sala->esquerda);
+    liberarMapa(sala->direita);
+    free(sala);
+}
+
+// =================================================================
+// FUNÇÃO PRINCIPAL
+// =================================================================
+
+/**
+ * Monta o mapa inicial da mansão (árvore binária) e inicia a exploração.
+ */
+int main() {
+    // 1. Criação de todas as salas
+    Sala *hall = criarSala("Hall de Entrada");
+    Sala *salaEstar = criarSala("Sala de Estar");
+    Sala *biblioteca = criarSala("Biblioteca");
+    Sala *cozinha = criarSala("Cozinha");
+    Sala *jardim = criarSala("Jardim");
+    Sala *escritorio = criarSala("Escritorio Secreto");
+    Sala *porao = criarSala("Porao Subterraneo");
+    
+    // 2. Montagem do Mapa (Estrutura da Árvore Binária)
+    
+    hall->esquerda = salaEstar;
+    hall->direita = biblioteca;
+
+    salaEstar->esquerda = cozinha;
+    salaEstar->direita = jardim;
+    
+    biblioteca->direita = escritorio;
+
+    cozinha->esquerda = porao;
+    
+    // As salas 'jardim', 'escritorio' e 'porao' já são folhas por padrão
+    // Cozinha->direita também é folha por padrão
+    
+
+    // 3. Início da Simulação
+    printf("Bem-vindo ao Detective Quest.\n");
+    printf("A investigacao comeca no Hall de Entrada.\n");
+    
+    explorarSalas(hall);
+    
+    // 4. Limpeza da memória
+    liberarMapa(hall);
+    
+    return 0;
+}
