@@ -1,0 +1,239 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
+// CONSTANTES
+#define MAX_NOME 50
+#define MAX_PISTA 100
+
+// =================================================================
+// 1. ESTRUTURAS DE DADOS
+// =================================================================
+
+// Estrutura para os cômodos (Mapa - Árvore Binária)
+struct Sala {
+    char nome[MAX_NOME];
+    char pista[MAX_PISTA]; // Pista associada à sala
+    struct Sala *esquerda;
+    struct Sala *direita;
+};
+typedef struct Sala Sala;
+
+// Estrutura para a Árvore de Pistas (BST)
+struct PistaNode {
+    char conteudo[MAX_PISTA];
+    struct PistaNode *esquerda;
+    struct PistaNode *direita;
+};
+typedef struct PistaNode PistaNode;
+
+
+// =================================================================
+// 2. FUNÇÕES DA MANSÃO (ÁRVORE BINÁRIA)
+// =================================================================
+
+/**
+ * Cria dinamicamente uma nova sala.
+ */
+Sala* criarSala(const char *nome, const char *pista) {
+    Sala* novaSala = (Sala*)malloc(sizeof(Sala));
+    if (novaSala == NULL) {
+        printf("Erro de alocacao de memoria para Sala.\n");
+        exit(1);
+    }
+    
+    strncpy(novaSala->nome, nome, MAX_NOME - 1);
+    novaSala->nome[MAX_NOME - 1] = '\0';
+    
+    strncpy(novaSala->pista, pista, MAX_PISTA - 1);
+    novaSala->pista[MAX_PISTA - 1] = '\0';
+    
+    novaSala->esquerda = NULL;
+    novaSala->direita = NULL;
+    
+    return novaSala;
+}
+
+
+// =================================================================
+// 3. FUNÇÕES DA ÁRVORE BST (PISTAS)
+// =================================================================
+
+/**
+ * Cria um novo nó para a Árvore BST.
+ */
+PistaNode* criarPistaNode(const char *conteudo) {
+    PistaNode* novoNode = (PistaNode*)malloc(sizeof(PistaNode));
+    if (novoNode == NULL) {
+        printf("Erro de alocacao de memoria para PistaNode.\n");
+        exit(1);
+    }
+    strncpy(novoNode->conteudo, conteudo, MAX_PISTA - 1);
+    novoNode->conteudo[MAX_PISTA - 1] = '\0';
+    novoNode->esquerda = NULL;
+    novoNode->direita = NULL;
+    return novoNode;
+}
+
+/**
+ * Insere uma nova pista na Árvore BST em ordem alfabética (recursivo).
+ */
+PistaNode* inserirPista(PistaNode* raiz, const char *conteudo) {
+    if (raiz == NULL) {
+        return criarPistaNode(conteudo);
+    }
+
+    int comparacao = strcmp(conteudo, raiz->conteudo);
+
+    if (comparacao < 0) {
+        raiz->esquerda = inserirPista(raiz->esquerda, conteudo);
+    } else if (comparacao > 0) {
+        raiz->direita = inserirPista(raiz->direita, conteudo);
+    }
+    // Ignora se for idêntica (comparacao == 0)
+
+    return raiz;
+}
+
+/**
+ * Exibe todas as pistas coletadas em ordem alfabética (In-order).
+ */
+void exibirPistas(PistaNode* raiz) {
+    if (raiz != NULL) {
+        exibirPistas(raiz->esquerda);
+        printf("- %s\n", raiz->conteudo);
+        exibirPistas(raiz->direita);
+    }
+}
+
+
+// =================================================================
+// 4. FUNÇÃO DE EXPLORAÇÃO PRINCIPAL
+// =================================================================
+
+/**
+ * Controla a navegação e a coleta de pistas.
+ */
+void explorarSalasComPistas(Sala *atual, PistaNode **pistas_raiz) {
+    char escolha;
+    
+    while (atual != NULL) {
+        printf("\nVoce esta em: %s\n", atual->nome);
+
+        // Coleta e insere a pista na BST, se houver
+        if (strlen(atual->pista) > 0) {
+            printf("[PISTA ENCONTRADA]: %s\n", atual->pista);
+            *pistas_raiz = inserirPista(*pistas_raiz, atual->pista);
+            // Opcional: Esvaziar a pista da sala para nao coletar novamente
+        }
+
+        // Verifica caminhos disponíveis
+        char caminhos[10] = "";
+        if (atual->esquerda != NULL) strcat(caminhos, "e");
+        if (atual->direita != NULL) strcat(caminhos, "d");
+        
+        if (strlen(caminhos) == 0) {
+            printf("FIM DA ROTA: Nao ha mais caminhos. Pressione 's' para finalizar.\n");
+        }
+
+        printf("Caminhos disponiveis [%s]. Escolha (e/d/s para sair): ", caminhos);
+        
+        if (scanf(" %c", &escolha) != 1) {
+            while (getchar() != '\n'); 
+            continue;
+        }
+
+        escolha = tolower(escolha); 
+
+        if (escolha == 's') {
+            printf("Investigacao encerrada por escolha do detetive.\n");
+            break;
+        } else if (escolha == 'e') {
+            if (atual->esquerda != NULL) {
+                atual = atual->esquerda;
+            } else {
+                printf("Caminho 'Esquerda' bloqueado ou nao existe.\n");
+            }
+        } else if (escolha == 'd') {
+            if (atual->direita != NULL) {
+                atual = atual->direita;
+            } else {
+                printf("Caminho 'Direita' bloqueado ou nao existe.\n");
+            }
+        } else {
+            printf("Opcao invalida. Escolha 'e', 'd' ou 's'.\n");
+        }
+    }
+}
+
+/**
+ * Libera a memória alocada para a árvore de salas.
+ */
+void liberarMapa(Sala *sala) {
+    if (sala == NULL) return;
+    liberarMapa(sala->esquerda);
+    liberarMapa(sala->direita);
+    free(sala);
+}
+
+/**
+ * Libera a memória alocada para a BST de pistas.
+ */
+void liberarPistas(PistaNode *node) {
+    if (node == NULL) return;
+    liberarPistas(node->esquerda);
+    liberarPistas(node->direita);
+    free(node);
+}
+
+// =================================================================
+// 5. FUNÇÃO PRINCIPAL
+// =================================================================
+
+int main() {
+    PistaNode *pistas_coletadas = NULL;
+
+    // 1. Montagem do Mapa da Mansão com Pistas
+    
+    Sala *hall = criarSala("Hall de Entrada", "O relogio parou as 03:00.");
+    
+    Sala *salaEstar = criarSala("Sala de Estar", "");
+    Sala *biblioteca = criarSala("Biblioteca", "A chave estava no livro de capa azul.");
+    hall->esquerda = salaEstar;
+    hall->direita = biblioteca;
+
+    Sala *cozinha = criarSala("Cozinha", "A faca grande sumiu da gaveta.");
+    Sala *jardim = criarSala("Jardim", "O solo foi revirado ha pouco.");
+    salaEstar->esquerda = cozinha;
+    salaEstar->direita = jardim;
+    
+    Sala *escritorio = criarSala("Escritorio Secreto", "O bilhete diz: 'Encontre-me no porao'.");
+    biblioteca->direita = escritorio;
+
+    Sala *porao = criarSala("Porao Subterraneo", "Encontrei um isqueiro no chao.");
+    cozinha->esquerda = porao;
+    // As outras salas sem filhos são folhas.
+
+    // 2. Início da Simulação
+    printf("Detective Quest: Coleta de Pistas\n");
+    printf("Investigacao comeca no Hall de Entrada.\n");
+    
+    explorarSalasComPistas(hall, &pistas_coletadas);
+    
+    // 3. Exibição final das pistas
+    printf("\n\nRELATORIO FINAL DE PISTAS\n");
+    
+    if (pistas_coletadas == NULL) {
+        printf("Nenhuma pista foi coletada.\n");
+    } else {
+        printf("Pistas Coletadas (em Ordem Alfabetica):\n");
+        exibirPistas(pistas_coletadas);
+    }
+
+    // 4. Limpeza da memória
+    liberarMapa(hall);
+    liberarPistas(pistas_coletadas);
+    
+    return 0;
+}
