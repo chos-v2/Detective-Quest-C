@@ -19,3 +19,17 @@ Visualização: Ao finalizar a exploração ('s'), o programa exibe um relatóri
 
 Estrutura Adicional: Introdução da struct PistaNode para a BST.
 
+O foco principal deste estágio é o uso da Tabela Hash para associar de forma eficiente as Pistas (chaves) aos Suspeitos (valores), permitindo que o sistema avalie a solidez da acusação do jogador.
+
+Lógica de Julgamento (verificarSuspeitoFinal)
+Ao final da exploração ('s'), o sistema realiza os seguintes passos automáticos:
+
+Lista todas as pistas coletadas (usando a BST).
+
+Solicita ao jogador o nome do suspeito acusado.
+
+Percorre a lista de pistas coletadas e, para cada pista, consulta a Tabela Hash para verificar qual suspeito é incriminado por ela.
+
+Conta o número total de evidências que apontam para o acusado.
+
+Veredito: O suspeito é considerado CULPADO se houver pelo menos duas (2) pistas coletadas que o incriminem.
